@@ -1,0 +1,14 @@
+[33m1036159[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfresh-main[m[33m, [m[1;32mbackup-before-recovery[m[33m)[m refs/heads/backup-before-recovery@{0}: branch: Created from fresh-main
+[33m1036159[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfresh-main[m[33m, [m[1;32mbackup-before-recovery[m[33m)[m refs/heads/fresh-main@{0}: commit: first-commit
+[33m1036159[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfresh-main[m[33m, [m[1;32mbackup-before-recovery[m[33m)[m HEAD@{0}: commit: first-commit
+[33mdf5aadc[m refs/heads/fresh-main@{1}: commit: first-commit
+[33mdf5aadc[m HEAD@{1}: commit: first-commit
+[33mc0d6e3d[m refs/heads/fresh-main@{2}: commit (initial): first-commit
+[33mc0d6e3d[m HEAD@{2}: commit (initial): first-commit
+[33mc3354ee[m[33m ([m[1;32mmain[m[33m)[m refs/heads/main@{0}: commit: first-commit
+[33mc3354ee[m[33m ([m[1;32mmain[m[33m)[m HEAD@{3}: commit: first-commit
+[33mf681ef1[m refs/heads/main@{1}: commit: first-commit
+[33mf681ef1[m HEAD@{4}: commit: first-commit
+[33m1116b1b[m[33m ([m[1;31morigin/main[m[33m)[m refs/remotes/origin/main@{0}: update by push
+[33m1116b1b[m[33m ([m[1;31morigin/main[m[33m)[m refs/heads/main@{2}: commit (initial): first-commit
+[33m1116b1b[m[33m ([m[1;31morigin/main[m[33m)[m HEAD@{5}: commit (initial): first-commit
