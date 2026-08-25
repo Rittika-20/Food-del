@@ -71,7 +71,7 @@ const Cart = () => {
               <>
                 <div className="cart-total-details">
                   <p>Discount ({discount}%)</p>
-                  <p>-₹{(getTotalCartAmount() * discount / 100).toFixed(2)}</p>
+                  <p>-₹{(getTotalCartAmount() * discount / 100).toFixed()}</p>
                 </div>
                 <hr/>
               </>
