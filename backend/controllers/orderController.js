@@ -1,6 +1,7 @@
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import Razorpay from "razorpay";
+import crypto from "crypto";
 
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -32,26 +33,11 @@ const placeOrder = async (req, res) => {
             });
         }
 
-        // Razorpay flow (existing logic)
-        const line_items = req.body.items.map((item) => ({
-            name: item.name,
-            amount: item.price * 100,
-            quantity: item.quantity
-        }));
-
-        line_items.push({
-            name: "Delivery Charges",
-            amount: 10 * 100,
-            quantity: 1
-        });
-
-        const totalAmount = line_items.reduce(
-            (sum, item) => sum + item.amount * item.quantity,
-            0
-        );
-
+        // Razorpay flow — use the already-calculated total sent from frontend
+        // (previously this was recalculated here with a hardcoded ₹10 delivery fee
+        // and no discount/platform fee, causing a mismatch with what the customer saw)
         const options = {
-            amount: totalAmount,
+            amount: Math.round(req.body.amount * 100), // in paise
             currency: "INR",
             receipt: newOrder._id.toString()
         };
@@ -74,15 +60,27 @@ const placeOrder = async (req, res) => {
 };
 
 const verifyOrder = async (req, res) => {
-    const { orderId, success } = req.body;
+    const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     try {
-        if (success == "true") {
-            await orderModel.findByIdAndUpdate(orderId, { payment: true });
-            res.json({ success: true, message: "Paid" });
-        } else {
-            await orderModel.findByIdAndDelete(orderId);
-            res.json({ success: false, message: "Not Paid" });
+        // Previously this trusted a client-sent "success" flag with no verification —
+        // anyone could call this route directly and mark any order as paid.
+        // Now we verify the Razorpay signature server-side using HMAC.
+        if (razorpay_order_id && razorpay_payment_id && razorpay_signature) {
+            const body = razorpay_order_id + "|" + razorpay_payment_id;
+            const expectedSignature = crypto
+                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+                .update(body.toString())
+                .digest("hex");
+
+            if (expectedSignature === razorpay_signature) {
+                await orderModel.findByIdAndUpdate(orderId, { payment: true });
+                return res.json({ success: true, message: "Paid" });
+            }
         }
+
+        // Verification failed or payment was cancelled/dismissed
+        await orderModel.findByIdAndDelete(orderId);
+        res.json({ success: false, message: "Not Paid" });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: "Error" });

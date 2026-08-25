@@ -41,7 +41,7 @@ const platformFee = subtotal === 0 ? 0 : 10;
 const finalTotal =
   subtotal === 0
     ? 0
-    : discountedAmount + deliveryFee + platformFee;
+    : Math.round(discountedAmount + deliveryFee + platformFee);
 
             const placeOrder = async (event) => {
   event.preventDefault();
@@ -69,19 +69,41 @@ const finalTotal =
       return;
     }
 
-    const { order, key_id, orderId, success_url, cancel_url } = response.data;
+    const { order, key_id, orderId } = response.data;
 
     const options = {
       key: key_id,
       amount: order.amount,
       currency: order.currency,
       order_id: order.id,
-      handler: function (paymentResponse) {
-        window.location.replace(success_url);
+      // Previously this just redirected on any callback without proving payment
+      // happened. Now we send Razorpay's signed fields to the backend so it can
+      // verify the payment really succeeded before marking the order paid.
+      handler: async function (paymentResponse) {
+        try {
+          const verifyRes = await axios.post(url + "/api/order/verify", {
+            orderId,
+            razorpay_order_id: paymentResponse.razorpay_order_id,
+            razorpay_payment_id: paymentResponse.razorpay_payment_id,
+            razorpay_signature: paymentResponse.razorpay_signature
+          });
+          if (verifyRes.data.success) {
+            navigate("/myorders");
+          } else {
+            toast.error("Payment verification failed. Please contact support.");
+            navigate("/cart");
+          }
+        } catch (err) {
+          console.log(err);
+          toast.error("Something went wrong verifying payment.");
+          navigate("/cart");
+        }
       },
       modal: {
-        ondismiss: function () {
-          window.location.replace(cancel_url);
+        ondismiss: async function () {
+          // user closed the payment modal without paying — clean up the pending order
+          await axios.post(url + "/api/order/verify", { orderId, success: "false" });
+          navigate("/cart");
         }
       }
     };
@@ -157,7 +179,7 @@ const finalTotal =
             <hr/>
             <div className="cart-total-details">
                 <b>Total</b>
-                <b>₹{finalTotal.toFixed()}</b>
+                <b>₹{finalTotal}</b>
             </div>
           </div>
 
